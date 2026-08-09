@@ -259,7 +259,7 @@
   // ---------------- state ----------------
   // BELANGRIJK: vul hier de URL van je eigen Cloudflare Worker in (zie instructies).
   // Voorbeeld: 'https://sky-radar-proxy.jouwnaam.workers.dev'
-  const PROXY_URL = 'https://my-flightwall-api.remy-vanduffel04.workers.dev/';
+  const PROXY_URL = 'https://REPLACE-ME.workers.dev';
 
   let OBS_LAT = 51.1667, OBS_LON = 4.1333, OBS_ELEV_M = 10;
   let RADIUS_KM = 150;
@@ -316,9 +316,11 @@
     const url = `${PROXY_URL}?lat=${OBS_LAT}&lon=${OBS_LON}&radius=${radiusNm}`;
     try{
       const res = await fetch(url);
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const data = await res.json();
+      let data;
+      try{ data = await res.json(); }
+      catch(parseErr){ throw new Error(`proxy gaf geen geldige data terug (HTTP ${res.status})`); }
       if(data.error) throw new Error(data.error);
+      if(!res.ok) throw new Error('HTTP '+res.status);
       const obsEcef = geodeticToEcef(OBS_LAT, OBS_LON, OBS_ELEV_M);
       const out = [];
       for(const s of (data.ac || [])){
