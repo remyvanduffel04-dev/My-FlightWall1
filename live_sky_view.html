@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +12,8 @@
     --phosphor:#39ff9e;
     --phosphor-dim:#12472e;
     --amber:#ffb454;
+    --mil:#ff5c5c;
+    --mil-dim:#5c1c1c;
     --text:#c8ffe4;
     --muted:#4f8a72;
     --muted-2:#2c5744;
@@ -57,12 +59,14 @@
   }
   .field{display:flex; align-items:center; gap:6px;}
   .field label{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em;}
-  .field input{
-    width:88px; background:#000; border:1px solid var(--panel-border); border-radius:5px;
+  .field input, .field select{
+    background:#000; border:1px solid var(--panel-border); border-radius:5px;
     color:var(--phosphor); font-family:inherit; font-size:12.5px; padding:6px 8px;
   }
+  .field input{width:88px;}
   .field input.small{width:64px;}
-  .field input:focus{outline:1px solid var(--phosphor); border-color:var(--phosphor);}
+  .field select{cursor:pointer;}
+  .field input:focus, .field select:focus{outline:1px solid var(--phosphor); border-color:var(--phosphor);}
   button{
     font-family:'Share Tech Mono', monospace; font-weight:600; font-size:12px; letter-spacing:0.04em;
     color:var(--phosphor); background:#04120a; border:1px solid var(--panel-border); border-radius:6px;
@@ -101,13 +105,14 @@
   #tooltip{
     position:absolute; pointer-events:none; background:#020e08ee; border:1px solid var(--panel-border);
     border-radius:6px; padding:8px 10px; font-size:11.5px; line-height:1.5; color:var(--text);
-    display:none; max-width:220px; z-index:5; box-shadow:0 8px 24px rgba(0,0,0,0.6);
+    display:none; max-width:230px; z-index:5; box-shadow:0 8px 24px rgba(0,0,0,0.6);
   }
   #tooltip .tt-name{font-weight:700; font-family:'Space Grotesk',sans-serif; margin-bottom:2px; color:var(--phosphor);}
-  .legend{ display:flex; gap:16px; margin-top:10px; padding-left:4px; font-size:11px; color:var(--muted); }
+  .legend{ display:flex; gap:16px; margin-top:10px; padding-left:4px; font-size:11px; color:var(--muted); flex-wrap:wrap; }
   .legend span{display:inline-flex; align-items:center; gap:6px;}
   .swatch{width:9px; height:9px; border-radius:50%;}
   .swatch.plane{background:var(--phosphor); clip-path: polygon(50% 0%, 0% 100%, 100% 100%);}
+  .swatch.mil{background:var(--mil); clip-path: polygon(50% 0%, 0% 100%, 100% 100%);}
 
   .rightcol{ display:flex; flex-direction:column; gap:16px; }
 
@@ -132,17 +137,20 @@
     font-family:'Space Grotesk', sans-serif; font-size:12px; margin:0; color:var(--muted);
     font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
   }
+  .badges{display:flex; gap:6px;}
   .mode-badge{
     font-size:10px; font-weight:700; letter-spacing:0.1em; padding:3px 8px; border-radius:4px; border:1px solid;
   }
   .mode-badge.auto{ color:var(--muted); border-color:var(--muted-2); }
   .mode-badge.lock{ color:var(--bg); background:var(--phosphor); border-color:var(--phosphor); box-shadow:0 0 8px rgba(57,255,158,0.6); }
+  .mode-badge.mil{ color:var(--bg); background:var(--mil); border-color:var(--mil); box-shadow:0 0 8px rgba(255,92,92,0.6); }
 
   .callsign{
     font-family:'Space Grotesk', sans-serif; font-size:28px; font-weight:700; color:var(--phosphor);
     text-shadow:0 0 12px rgba(57,255,158,0.5); letter-spacing:0.03em; margin-bottom:2px;
     min-height:34px;
   }
+  .callsign.mil{ color:var(--mil); text-shadow:0 0 12px rgba(255,92,92,0.5); }
   .callsign-sub{ font-size:11px; color:var(--muted); margin-bottom:14px; letter-spacing:0.04em; }
 
   .telemetry{ display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
@@ -171,10 +179,13 @@
     background:#04140b; cursor:pointer; transition:border-color .12s ease;
   }
   .obj-row:hover, .obj-row.active{border-color:var(--phosphor);}
+  .obj-row.mil:hover, .obj-row.mil.active{border-color:var(--mil);}
   .obj-row .dot{width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--phosphor); clip-path: polygon(50% 0%, 0% 100%, 100% 100%);}
+  .obj-row.mil .dot{background:var(--mil);}
   .obj-row .info{flex:1; min-width:0;}
   .obj-row .info .name{font-size:11.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text);}
-  .obj-row .info .sub{font-size:10px; color:var(--muted);}
+  .obj-row.mil .info .name{color:var(--mil);}
+  .obj-row .info .sub{font-size:10px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .empty-note{ font-size:11px; color:var(--muted-2); padding:10px 4px; line-height:1.6; }
 
   footer{ text-align:center; font-size:10.5px; color:var(--muted-2); padding:6px 4px 2px; line-height:1.7; }
@@ -188,10 +199,10 @@
   <header>
     <div class="brand">
       <div class="eyebrow">Live aircraft radar</div>
-      <h1>Welke vliegtuigen zitten binnen bereik?</h1>
+      <h1>What's flying within range?</h1>
     </div>
     <div class="clockrow">
-      <div class="clock"><div class="label">Lokale tijd</div><div class="val" id="localClock">--:--:--</div></div>
+      <div class="clock"><div class="label">Local time</div><div class="val" id="localClock">--:--:--</div></div>
       <div class="clock"><div class="label">UTC</div><div class="val" id="utcClock">--:--:--</div></div>
     </div>
   </header>
@@ -199,16 +210,24 @@
   <div class="controls">
     <div class="field"><label for="latInput">Lat</label><input id="latInput" type="number" step="0.0001" value="51.1667"></div>
     <div class="field"><label for="lonInput">Lon</label><input id="lonInput" type="number" step="0.0001" value="4.1333"></div>
-    <div class="field"><label for="radiusInput">Straal (km)</label><input id="radiusInput" class="small" type="number" step="10" min="10" max="450" value="150"></div>
-    <button id="locateBtn">📍 Mijn locatie</button>
-    <button id="applyBtn" class="primary">Toepassen</button>
+    <div class="field"><label for="radiusInput">Radius (km)</label><input id="radiusInput" class="small" type="number" step="10" min="10" max="450" value="150"></div>
+    <div class="field">
+      <label for="filterSelect">Filter</label>
+      <select id="filterSelect">
+        <option value="all">All aircraft</option>
+        <option value="mil">Military only</option>
+        <option value="civ">Hide military</option>
+      </select>
+    </div>
+    <button id="locateBtn">📍 My location</button>
+    <button id="applyBtn" class="primary">Apply</button>
     <div class="spacer"></div>
-    <span id="statusline">gereed.</span>
+    <span id="statusline">ready.</span>
   </div>
 
   <main>
     <div class="scope-card">
-      <h2>Radarscherm — cirkel = ingestelde straal rond jouw locatie</h2>
+      <h2>Radar screen — circle = configured radius around your location</h2>
       <div id="domeWrap">
         <canvas id="domeCanvas"></canvas>
         <div class="scanlines"></div>
@@ -216,21 +235,25 @@
         <div id="tooltip"></div>
       </div>
       <div class="legend">
-        <span><i class="swatch plane"></i> Vliegtuig (adsb.lol)</span>
-        <span>Ringen = afstand vanaf het midden, in km</span>
+        <span><i class="swatch plane"></i> Civilian aircraft</span>
+        <span><i class="swatch mil"></i> Military aircraft</span>
+        <span>Rings = distance from center, in km</span>
       </div>
     </div>
 
     <div class="rightcol">
-      <div class="screen" style="min-height:300px;">
+      <div class="screen" style="min-height:320px;">
         <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
         <div class="screen-inner">
           <div class="info-head">
-            <h2>Vliegtuig info</h2>
-            <span class="mode-badge auto" id="modeBadge">AUTO</span>
+            <h2>Aircraft info</h2>
+            <div class="badges">
+              <span class="mode-badge mil" id="milBadge" style="display:none;">MIL</span>
+              <span class="mode-badge auto" id="modeBadge">AUTO</span>
+            </div>
           </div>
           <div id="infoBody">
-            <div class="noscan"><span class="dot"></span> scannen naar contacten…</div>
+            <div class="noscan"><span class="dot"></span> scanning for contacts…</div>
           </div>
         </div>
       </div>
@@ -238,16 +261,17 @@
       <div class="screen panel">
         <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
         <div class="screen-inner">
-          <h2>Binnen bereik <span class="count" id="objCount">0</span></h2>
-          <div class="list" id="objList"><div class="empty-note">Bezig met laden van live data…</div></div>
+          <h2>In range <span class="count" id="objCount">0</span></h2>
+          <div class="list" id="objList"><div class="empty-note">Loading live data…</div></div>
         </div>
       </div>
     </div>
   </main>
 
   <footer>
-    Vliegtuigdata: <a href="https://api.adsb.lol/docs" target="_blank" rel="noopener">adsb.lol</a> —
-    gratis, publieke API, geen account nodig. Data kan af en toe wat vertraagd of onvolledig zijn.
+    Aircraft data: <a href="https://api.adsb.lol/docs" target="_blank" rel="noopener">adsb.lol</a> ·
+    Routes &amp; aircraft models: <a href="https://www.adsbdb.com/" target="_blank" rel="noopener">adsbdb.com</a> —
+    free public APIs. Data may occasionally be delayed or incomplete.
   </footer>
 
 </div>
@@ -257,12 +281,13 @@
   const deg2rad = Math.PI/180, rad2deg = 180/Math.PI;
 
   // ---------------- state ----------------
-  // BELANGRIJK: vul hier de URL van je eigen Cloudflare Worker in (zie instructies).
-  // Voorbeeld: 'https://sky-radar-proxy.jouwnaam.workers.dev'
-  const PROXY_URL = 'https://my-flightwall-api.remy-vanduffel04.workers.dev/';
+  // IMPORTANT: put your own Cloudflare Worker URL here (see setup instructions).
+  // Example: 'https://sky-radar-proxy.yourname.workers.dev'
+  const PROXY_URL = 'https://REPLACE-ME.workers.dev';
 
   let OBS_LAT = 51.1667, OBS_LON = 4.1333, OBS_ELEV_M = 10;
   let RADIUS_KM = 150;
+  let filterMode = 'all'; // 'all' | 'mil' | 'civ'
   const AIRCRAFT_UPDATE_MS = 20000;
   const RENDER_MS = 1000;
   const TRAIL_LEN = 5;
@@ -271,7 +296,9 @@
   let selectedKey = null;
   let selectedAircraftKey = null;
   let lastAircraftFetch = 0;
+  let lastGoodFetch = 0;
   const historyMap = new Map();
+  const militaryFlagMap = new Map();
 
   // ---------------- geometry helpers ----------------
   function geodeticToEcef(latDeg, lonDeg, altM){
@@ -294,7 +321,7 @@
     return {az, el, rangeKm: rangeM/1000};
   }
   function compassDir(az){
-    const dirs = ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'];
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
     return dirs[Math.round(az/22.5)%16];
   }
   function pushHistory(key, az, rangeKm){
@@ -303,13 +330,17 @@
     h.push({az, rangeKm});
     if(h.length>TRAIL_LEN) h.shift();
   }
+  function visibleAircraft(){
+    if(filterMode==='mil') return aircraft.filter(a=>a.military);
+    if(filterMode==='civ') return aircraft.filter(a=>!a.military);
+    return aircraft;
+  }
 
   // ---------------- data fetching ----------------
-  // Vliegtuig- en routedata via je eigen Cloudflare Worker-proxy (zie worker.js).
-  // Die haalt adsb.lol + adsbdb.com server-side op, dus geen CORS-gedoe meer hier.
+  // Aircraft + route + model data via your own Cloudflare Worker proxy (see worker.js).
   async function fetchAircraft(){
     if(PROXY_URL.includes('REPLACE-ME')){
-      setStatus('vul eerst je eigen Worker-URL in bij PROXY_URL in de code', 'err');
+      setStatus('set your own Worker URL in PROXY_URL in the code first', 'err');
       return;
     }
     const radiusNm = Math.min(250, Math.max(1, Math.round(RADIUS_KM / 1.852)));
@@ -318,9 +349,10 @@
       const res = await fetch(url);
       let data;
       try{ data = await res.json(); }
-      catch(parseErr){ throw new Error(`proxy gaf geen geldige data terug (HTTP ${res.status})`); }
+      catch(parseErr){ throw new Error(`proxy returned invalid data (HTTP ${res.status})`); }
       if(data.error) throw new Error(data.error);
       if(!res.ok) throw new Error('HTTP '+res.status);
+
       const obsEcef = geodeticToEcef(OBS_LAT, OBS_LON, OBS_ELEV_M);
       const out = [];
       for(const s of (data.ac || [])){
@@ -336,23 +368,32 @@
         const track = s.track!=null ? s.track : s.true_heading;
         const vrateFtMin = s.baro_rate!=null ? s.baro_rate : s.geom_rate;
         const vrate = vrateFtMin!=null ? vrateFtMin * 0.00508 : null;
-        const acType = s.t || s.desc || null;
         const squawk = s.squawk;
-        const route = s.route || null; // {airline, originIata, originIcao, originCity, destIata, destIcao, destCity}
+        const route = s.route || null;
+        const model = s.model || null;
+        const manufacturer = s.manufacturer || null;
+        const registeredOwner = s.registeredOwner || null;
+        const military = !!s.military;
         const tEcef = geodeticToEcef(lat, lon, alt);
         const {az, el, rangeKm} = ecefToAzElRangeKm(OBS_LAT, OBS_LON, obsEcef, tEcef);
         if(rangeKm <= RADIUS_KM){
           const key = 'p:'+icao24;
           out.push({key, name: callsign, icao24, az, el, rangeKm, type:'plane',
                      altM: alt, speedKmh: gsKt!=null ? gsKt*1.852 : null,
-                     track, vrate, acType, squawk, route});
+                     track, vrate, squawk, route, model, manufacturer, registeredOwner, military});
           pushHistory(key, az, rangeKm);
+          militaryFlagMap.set(key, military);
         }
       }
       aircraft = out;
-      setStatus(`vliegtuigen bijgewerkt (${out.length} binnen ${RADIUS_KM} km)`, 'ok');
+      lastGoodFetch = Date.now();
+      setStatus(`aircraft updated (${out.length} within ${RADIUS_KM} km)`, 'ok');
     }catch(e){
-      setStatus('kon vliegtuigdata niet ophalen — ' + e.message, 'err');
+      const ageSec = lastGoodFetch ? Math.round((Date.now()-lastGoodFetch)/1000) : null;
+      const ageTxt = ageSec!=null ? ` — showing data from ${ageSec}s ago` : '';
+      setStatus('refresh failed (' + e.message + ')' + ageTxt, 'err');
+      // aircraft array is deliberately NOT cleared here — the screen keeps the
+      // last known state instead of going blank on a brief hiccup.
     }
   }
 
@@ -391,7 +432,6 @@
   }
   window.addEventListener('resize', resizeCanvas);
 
-  // az = compass bearing (0=N), rangeKm = distance from observer, maps to radius R at RADIUS_KM
   function rangeToXY(cx, cy, R, azDeg, rangeKm){
     const r = R * Math.min(1, rangeKm/RADIUS_KM);
     const a = (azDeg-90)*deg2rad;
@@ -423,7 +463,6 @@
     }
     ctx.restore();
 
-    // range rings at 25/50/75/100% of RADIUS_KM
     ctx.font = '10px Share Tech Mono, monospace';
     [0.25,0.5,0.75].forEach(frac=>{
       const rr = R*frac;
@@ -433,14 +472,12 @@
       ctx.fillStyle = 'rgba(57,255,158,0.55)';
       ctx.fillText(Math.round(RADIUS_KM*frac)+' km', cx+rr*Math.cos(-45*deg2rad)+4, cy+rr*Math.sin(-45*deg2rad));
     });
-    // outer rim = full radius
     ctx.strokeStyle = 'rgba(57,255,158,0.55)';
     ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle = 'rgba(57,255,158,0.75)';
     ctx.fillText(Math.round(RADIUS_KM)+' km', cx+R*Math.cos(-45*deg2rad)+4, cy+R*Math.sin(-45*deg2rad));
 
-    // degree tick marks on rim (bearing)
     for(let a=0; a<360; a+=5){
       const long = a%30===0;
       const p1 = rangeToXY(cx,cy,R,a,RADIUS_KM);
@@ -449,7 +486,6 @@
       ctx.lineWidth = long ? 1.4 : 0.8;
       ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
     }
-    // spokes every 30deg
     ctx.strokeStyle = 'rgba(57,255,158,0.09)';
     ctx.lineWidth = 1;
     for(let a=0; a<360; a+=30){
@@ -457,7 +493,6 @@
       ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(p.x,p.y); ctx.stroke();
     }
 
-    // radar sweep (rotating trailing wedge)
     if(ctx.createConicGradient){
       ctx.save();
       const sweepDeg = (t*20) % 360;
@@ -475,13 +510,11 @@
       ctx.restore();
     }
 
-    // center crosshair (jouw locatie)
     ctx.strokeStyle = 'rgba(57,255,158,0.5)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(cx-6,cy); ctx.lineTo(cx+6,cy); ctx.moveTo(cx,cy-6); ctx.lineTo(cx,cy+6); ctx.stroke();
 
-    // cardinal labels
-    const cardinals = [{a:0,l:'N'},{a:90,l:'O'},{a:180,l:'Z'},{a:270,l:'W'}];
+    const cardinals = [{a:0,l:'N'},{a:90,l:'E'},{a:180,l:'S'},{a:270,l:'W'}];
     ctx.font = '600 13px Space Grotesk, sans-serif';
     cardinals.forEach(c=>{
       const p = rangeToXY(cx,cy,R+16,c.a,RADIUS_KM);
@@ -491,28 +524,31 @@
     });
     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
 
-    // trails (afterglow dots)
+    const visibleKeys = new Set(visibleAircraft().map(a=>a.key));
     for(const [key, hist] of historyMap.entries()){
+      if(!visibleKeys.has(key)) continue;
+      const isMil = militaryFlagMap.get(key);
       for(let i=0;i<hist.length-1;i++){
         const age = (hist.length-1-i)/TRAIL_LEN;
         const pos = rangeToXY(cx,cy,R,hist[i].az,hist[i].rangeKm);
-        ctx.fillStyle = `rgba(57,255,158,${0.25*(1-age)})`;
+        ctx.fillStyle = isMil ? `rgba(255,92,92,${0.25*(1-age)})` : `rgba(57,255,158,${0.25*(1-age)})`;
         ctx.beginPath(); ctx.arc(pos.x,pos.y, 2, 0, Math.PI*2); ctx.fill();
       }
     }
 
-    // markers
     markerPositions = [];
-    for(const obj of aircraft){
+    for(const obj of visibleAircraft()){
       const p = rangeToXY(cx,cy,R,obj.az,obj.rangeKm);
       markerPositions.push({x:p.x, y:p.y, obj});
       const isSel = selectedKey === obj.key;
+      const color = obj.military ? '#ff5c5c' : '#39ff9e';
+      const glow = obj.military ? 'rgba(255,92,92,0.75)' : 'rgba(57,255,158,0.75)';
 
       ctx.save();
-      ctx.shadowColor = 'rgba(57,255,158,0.75)';
+      ctx.shadowColor = glow;
       ctx.shadowBlur = isSel ? 16 : 7;
       ctx.translate(p.x,p.y); ctx.rotate((obj.track!=null?obj.track:obj.az)*deg2rad);
-      ctx.fillStyle = '#39ff9e';
+      ctx.fillStyle = color;
       ctx.beginPath(); ctx.moveTo(0,-6.5); ctx.lineTo(5,6); ctx.lineTo(-5,6); ctx.closePath(); ctx.fill();
       ctx.restore();
 
@@ -533,7 +569,6 @@
     requestAnimationFrame(draw);
   }
 
-  // hit testing / tooltip
   canvas.addEventListener('mousemove', (e)=>{
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX-rect.left, my = e.clientY-rect.top;
@@ -559,54 +594,63 @@
   }
 
   function showTooltip(obj, x, y){
-    tooltip.innerHTML = `<div class="tt-name">${escapeHtml(obj.name)}</div>
-      Peiling: ${obj.az.toFixed(0)}° ${compassDir(obj.az)} · Afstand: ${obj.rangeKm.toFixed(0)} km<br>
-      Hoogte: ${Math.round(obj.altM)} m · Elevatie: ${obj.el.toFixed(1)}°<br>
-      Snelheid: ${obj.speedKmh?Math.round(obj.speedKmh)+' km/u':'onbekend'}`;
-    tooltip.style.left = Math.min(x+12, wrap.clientWidth-230)+'px';
+    const modelTxt = obj.model || obj.manufacturer || 'unknown model';
+    tooltip.innerHTML = `<div class="tt-name">${escapeHtml(obj.name)}${obj.military?' · MIL':''}</div>
+      ${escapeHtml(modelTxt)}<br>
+      Bearing: ${obj.az.toFixed(0)}° ${compassDir(obj.az)} · Distance: ${obj.rangeKm.toFixed(0)} km<br>
+      Altitude: ${Math.round(obj.altM)} m · Elevation: ${obj.el.toFixed(1)}°<br>
+      Speed: ${obj.speedKmh?Math.round(obj.speedKmh)+' km/h':'unknown'}`;
+    tooltip.style.left = Math.min(x+12, wrap.clientWidth-240)+'px';
     tooltip.style.top = Math.max(y-10, 4)+'px';
     tooltip.style.display = 'block';
   }
-  function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   // ---------------- aircraft info screen ----------------
   function renderAircraftInfo(){
     const badge = document.getElementById('modeBadge');
+    const milBadge = document.getElementById('milBadge');
     const body = document.getElementById('infoBody');
+    const pool = visibleAircraft();
     let target = null;
     if(selectedAircraftKey){
-      target = aircraft.find(a=>a.key===selectedAircraftKey) || null;
+      target = pool.find(a=>a.key===selectedAircraftKey) || null;
       if(!target) selectedAircraftKey = null;
     }
-    if(!target && aircraft.length>0){
-      target = aircraft.reduce((best,a)=> (!best || a.rangeKm<best.rangeKm) ? a : best, null);
+    if(!target && pool.length>0){
+      target = pool.reduce((best,a)=> (!best || a.rangeKm<best.rangeKm) ? a : best, null);
     }
     if(selectedAircraftKey && target){
       badge.textContent = 'LOCK'; badge.className = 'mode-badge lock';
     } else {
       badge.textContent = 'AUTO'; badge.className = 'mode-badge auto';
     }
+    milBadge.style.display = target && target.military ? 'inline-block' : 'none';
+
     if(!target){
-      body.innerHTML = '<div class="noscan"><span class="dot"></span> geen vliegtuigen binnen bereik</div>';
+      body.innerHTML = '<div class="noscan"><span class="dot"></span> no aircraft in range</div>';
       return;
     }
-    const vrateTxt = target.vrate==null ? '—' : (Math.abs(target.vrate)<0.5 ? 'stabiel' : (target.vrate>0?'▲ klimmend':'▼ dalend') + ' ' + Math.abs(Math.round(target.vrate*196.85)) + ' ft/min');
+    const vrateTxt = target.vrate==null ? '—' : (Math.abs(target.vrate)<0.5 ? 'level' : (target.vrate>0?'▲ climbing':'▼ descending') + ' ' + Math.abs(Math.round(target.vrate*196.85)) + ' ft/min');
     const r = target.route;
-    const routeTxt = r ? `${escapeHtml(r.originIata||r.originIcao||'?')} → ${escapeHtml(r.destIata||r.destIcao||'?')}` : 'route onbekend';
+    const routeTxt = r ? `${escapeHtml(r.originIata||r.originIcao||'?')} → ${escapeHtml(r.destIata||r.destIcao||'?')}` : 'route unknown';
     const routeSub = r ? `${escapeHtml(r.originCity||'')} → ${escapeHtml(r.destCity||'')}${r.airline?' · '+escapeHtml(r.airline):''}` : '';
+    const modelTxt = target.model || (target.manufacturer ? target.manufacturer : 'unknown model');
+
     body.innerHTML = `
-      <div class="callsign">${escapeHtml(target.name)}</div>
-      <div class="callsign-sub">ICAO24 ${escapeHtml(target.icao24||'—').toUpperCase()} · type ${escapeHtml(target.acType||'onbekend')}</div>
+      <div class="callsign ${target.military?'mil':''}">${escapeHtml(target.name)}</div>
+      <div class="callsign-sub">ICAO24 ${escapeHtml(target.icao24||'—').toUpperCase()}${target.registeredOwner?' · '+escapeHtml(target.registeredOwner):''}</div>
       <div class="telemetry">
+        <div class="tele-item full"><div class="k">Model</div><div class="v">${escapeHtml(modelTxt)}</div></div>
         <div class="tele-item full"><div class="k">Route</div><div class="v">${routeTxt}</div>
-          ${routeSub ? `<div class="callsign-sub" style="margin:2px 0 0;">${routeSub}</div>` : ''}</div>
-        <div class="tele-item"><div class="k">Hoogte</div><div class="v">${Math.round(target.altM)} m</div></div>
-        <div class="tele-item"><div class="k">Snelheid</div><div class="v">${target.speedKmh?Math.round(target.speedKmh):'—'} km/u</div></div>
-        <div class="tele-item"><div class="k">Koers</div><div class="v">${target.track!=null?Math.round(target.track)+'° '+compassDir(target.track):'—'}</div></div>
-        <div class="tele-item"><div class="k">Klim/daal</div><div class="v ${target.vrate && Math.abs(target.vrate)>0.5 ? 'warn':''}">${vrateTxt}</div></div>
-        <div class="tele-item"><div class="k">Peiling</div><div class="v">${target.az.toFixed(0)}° ${compassDir(target.az)}</div></div>
-        <div class="tele-item"><div class="k">Elevatie</div><div class="v">${target.el.toFixed(0)}°</div></div>
-        <div class="tele-item"><div class="k">Afstand</div><div class="v">${target.rangeKm.toFixed(0)} km</div></div>
+          ${routeSub.trim()!=='→' ? `<div class="callsign-sub" style="margin:2px 0 0;">${routeSub}</div>` : ''}</div>
+        <div class="tele-item"><div class="k">Altitude</div><div class="v">${Math.round(target.altM)} m</div></div>
+        <div class="tele-item"><div class="k">Speed</div><div class="v">${target.speedKmh?Math.round(target.speedKmh):'—'} km/h</div></div>
+        <div class="tele-item"><div class="k">Heading</div><div class="v">${target.track!=null?Math.round(target.track)+'° '+compassDir(target.track):'—'}</div></div>
+        <div class="tele-item"><div class="k">Vertical rate</div><div class="v ${target.vrate && Math.abs(target.vrate)>0.5 ? 'warn':''}">${vrateTxt}</div></div>
+        <div class="tele-item"><div class="k">Bearing</div><div class="v">${target.az.toFixed(0)}° ${compassDir(target.az)}</div></div>
+        <div class="tele-item"><div class="k">Elevation</div><div class="v">${target.el.toFixed(0)}°</div></div>
+        <div class="tele-item"><div class="k">Distance</div><div class="v">${target.rangeKm.toFixed(0)} km</div></div>
         <div class="tele-item"><div class="k">Squawk</div><div class="v">${target.squawk||'—'}</div></div>
       </div>`;
   }
@@ -614,19 +658,20 @@
   // ---------------- side list ----------------
   function renderList(){
     const listEl = document.getElementById('objList');
-    const all = [...aircraft].sort((a,b)=>a.rangeKm-b.rangeKm);
+    const all = [...visibleAircraft()].sort((a,b)=>a.rangeKm-b.rangeKm);
     document.getElementById('objCount').textContent = all.length;
     if(all.length===0){
-      listEl.innerHTML = '<div class="empty-note">Geen vliegtuigen binnen de ingestelde straal op dit moment (of data nog niet geladen).</div>';
+      listEl.innerHTML = '<div class="empty-note">No aircraft in range right now (or data not loaded yet).</div>';
     } else {
       listEl.innerHTML = '';
       for(const obj of all){
         const row = document.createElement('div');
-        row.className = 'obj-row' + (selectedKey===obj.key ? ' active' : '');
+        row.className = 'obj-row' + (obj.military?' mil':'') + (selectedKey===obj.key ? ' active' : '');
+        const modelTxt = obj.model || obj.manufacturer || '';
         row.innerHTML = `<span class="dot"></span>
           <span class="info">
-            <div class="name">${escapeHtml(obj.name)}${obj.route ? ' · '+escapeHtml(obj.route.originIata||obj.route.originIcao||'?')+' → '+escapeHtml(obj.route.destIata||obj.route.destIcao||'?') : ''}</div>
-            <div class="sub">${obj.rangeKm.toFixed(0)} km · peiling ${obj.az.toFixed(0)}° · ${Math.round(obj.altM)} m</div>
+            <div class="name">${escapeHtml(obj.name)}${obj.military?' · MIL':''}</div>
+            <div class="sub">${obj.rangeKm.toFixed(0)} km · ${Math.round(obj.altM)} m${modelTxt?' · '+escapeHtml(modelTxt):''}</div>
           </span>`;
         row.addEventListener('click', ()=> selectObject(obj));
         listEl.appendChild(row);
@@ -652,18 +697,23 @@
     if(isFinite(rad) && rad>0){ RADIUS_KM = rad; }
     lastAircraftFetch = 0;
     historyMap.clear();
-    setStatus('instellingen bijgewerkt — data wordt ververst…');
+    setStatus('settings updated — refreshing data…');
+  });
+  document.getElementById('filterSelect').addEventListener('change', (e)=>{
+    filterMode = e.target.value;
+    selectedKey = null; selectedAircraftKey = null;
+    renderList();
   });
   document.getElementById('locateBtn').addEventListener('click', ()=>{
-    if(!navigator.geolocation){ setStatus('geolocatie niet beschikbaar in deze browser', 'err'); return; }
-    setStatus('locatie opvragen…');
+    if(!navigator.geolocation){ setStatus('geolocation not available in this browser', 'err'); return; }
+    setStatus('requesting location…');
     navigator.geolocation.getCurrentPosition(pos=>{
       OBS_LAT = pos.coords.latitude; OBS_LON = pos.coords.longitude;
       document.getElementById('latInput').value = OBS_LAT.toFixed(4);
       document.getElementById('lonInput').value = OBS_LON.toFixed(4);
       lastAircraftFetch = 0; historyMap.clear();
-      setStatus('locatie gevonden — data wordt ververst…', 'ok');
-    }, err=>{ setStatus('kon locatie niet ophalen: ' + err.message, 'err'); }, {timeout:8000});
+      setStatus('location found — refreshing data…', 'ok');
+    }, err=>{ setStatus('could not get location: ' + err.message, 'err'); }, {timeout:8000});
   });
 
   // ---------------- init ----------------
