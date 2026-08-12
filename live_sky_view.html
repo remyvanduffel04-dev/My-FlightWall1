@@ -151,6 +151,14 @@
     min-height:34px;
   }
   .callsign.mil{ color:var(--mil); text-shadow:0 0 12px rgba(255,92,92,0.5); }
+  .emergency-badge{display:none;color:#fff;background:#d40000;border:1px solid #ff6b6b;font-size:10px;font-weight:800;letter-spacing:.12em;padding:3px 8px;border-radius:4px;box-shadow:0 0 12px rgba(255,0,0,.55);animation:emergencyPulse 1s infinite;}
+  .emergency-badge.active{display:inline-block;}
+  @keyframes emergencyPulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .obj-row.emergency{border-color:#d40000;background:#230606;box-shadow:inset 0 0 12px rgba(255,0,0,.12);animation:emergencyRow 1.2s infinite;}
+  .obj-row.emergency .dot{background:#ff3030;box-shadow:0 0 8px #ff3030;animation:emergencyPulse 1s infinite;}
+  .obj-row.emergency .info .name{color:#ff6b6b;}
+  @keyframes emergencyRow{0%,100%{border-color:#8d0000}50%{border-color:#ff3030}}
+  .emergency-note{color:#ff5b5b !important;font-weight:800;letter-spacing:.08em;}
   .callsign-sub{ font-size:11px; color:var(--muted); margin-bottom:14px; letter-spacing:0.04em; }
 
   .telemetry{ display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
@@ -248,6 +256,7 @@
           <div class="info-head">
             <h2>Aircraft info</h2>
             <div class="badges">
+              <span class="emergency-badge" id="emergencyBadge">EMERGENCY</span>
               <span class="mode-badge mil" id="milBadge" style="display:none;">MIL</span>
               <span class="mode-badge auto" id="modeBadge">AUTO</span>
             </div>
@@ -291,12 +300,17 @@
   const AIRCRAFT_UPDATE_MS = 20000;
   const RENDER_MS = 1000;
   const TRAIL_LEN = 5;
+  const AUTO_RELOAD_MS = 30 * 60 * 1000;
+  const WATCHDOG_MS = 15000;
+  const STALE_DATA_MS = 2 * 60 * 1000;
 
   let aircraft = [];
   let selectedKey = null;
   let selectedAircraftKey = null;
   let lastAircraftFetch = 0;
   let lastGoodFetch = 0;
+  let lastReload = Date.now();
+  let emergencyKeys = new Set();
   const historyMap = new Map();
   const militaryFlagMap = new Map();
 
@@ -336,6 +350,32 @@
     return aircraft;
   }
 
+  function isEmergencySquawk(squawk){
+    const q = String(squawk ?? '').trim();
+    return q === '7500' || q === '7600' || q === '7700';
+  }
+  function emergencyLabel(squawk){
+    const q = String(squawk ?? '').trim();
+    if(q === '7500') return '7500 · HIJACK';
+    if(q === '7600') return '7600 · RADIO FAILURE';
+    if(q === '7700') return '7700 · EMERGENCY';
+    return '';
+  }
+  function saveSettings(){try{localStorage.setItem('flightwall.settings',JSON.stringify({lat:OBS_LAT,lon:OBS_LON,radius:RADIUS_KM,filter:filterMode}));}catch(e){}}
+  function loadSettings(){
+    try{
+      const raw=localStorage.getItem('flightwall.settings'); if(!raw)return;
+      const s=JSON.parse(raw);
+      if(Number.isFinite(Number(s.lat))&&Number.isFinite(Number(s.lon))){OBS_LAT=Number(s.lat);OBS_LON=Number(s.lon);}
+      if(Number.isFinite(Number(s.radius))&&Number(s.radius)>0)RADIUS_KM=Math.min(450,Number(s.radius));
+      if(['all','mil','civ'].includes(s.filter))filterMode=s.filter;
+      document.getElementById('latInput').value=OBS_LAT.toFixed(4);
+      document.getElementById('lonInput').value=OBS_LON.toFixed(4);
+      document.getElementById('radiusInput').value=RADIUS_KM;
+      document.getElementById('filterSelect').value=filterMode;
+    }catch(e){}
+  }
+
   // ---------------- data fetching ----------------
   // Aircraft + route + model data via your own Cloudflare Worker proxy (see worker.js).
   async function fetchAircraft(){
@@ -370,10 +410,11 @@
         const vrate = vrateFtMin!=null ? vrateFtMin * 0.00508 : null;
         const squawk = s.squawk;
         const route = s.route || null;
-        const model = s.model || null;
+        const model = s.model || s.desc || s.t || s.type || null;
         const manufacturer = s.manufacturer || null;
-        const registeredOwner = s.registeredOwner || null;
+        const registeredOwner = s.registeredOwner || s.ownOp || s.operator || null;
         const military = !!s.military;
+        const emergency = isEmergencySquawk(squawk);
         const tEcef = geodeticToEcef(lat, lon, alt);
         const {az, el, rangeKm} = ecefToAzElRangeKm(OBS_LAT, OBS_LON, obsEcef, tEcef);
         if(rangeKm <= RADIUS_KM){
@@ -387,6 +428,10 @@
       }
       aircraft = out;
       lastGoodFetch = Date.now();
+      const newEmergencyKeys = new Set(out.filter(a=>a.emergency).map(a=>a.key));
+      const newlyDetected = [...newEmergencyKeys].filter(k=>!emergencyKeys.has(k));
+      emergencyKeys = newEmergencyKeys;
+      if(newlyDetected.length && !selectedAircraftKey){selectedAircraftKey=newlyDetected[0];selectedKey=newlyDetected[0];}
       setStatus(`aircraft updated (${out.length} within ${RADIUS_KM} km)`, 'ok');
     }catch(e){
       const ageSec = lastGoodFetch ? Math.round((Date.now()-lastGoodFetch)/1000) : null;
@@ -545,11 +590,13 @@
       const glow = obj.military ? 'rgba(255,92,92,0.75)' : 'rgba(57,255,158,0.75)';
 
       ctx.save();
-      ctx.shadowColor = glow;
+      if(obj.emergency) ctx.globalAlpha=0.9+0.1*Math.sin(performance.now()/160);
+      ctx.shadowColor = obj.emergency ? '#ff2020' : glow;
       ctx.shadowBlur = isSel ? 16 : 7;
       ctx.translate(p.x,p.y); ctx.rotate((obj.track!=null?obj.track:obj.az)*deg2rad);
       ctx.fillStyle = color;
       ctx.beginPath(); ctx.moveTo(0,-6.5); ctx.lineTo(5,6); ctx.lineTo(-5,6); ctx.closePath(); ctx.fill();
+      if(obj.emergency){ctx.strokeStyle='#ff3030';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,11+2*Math.sin(performance.now()/180),0,Math.PI*2);ctx.stroke();}
       ctx.restore();
 
       if(isSel){
@@ -610,6 +657,7 @@
   function renderAircraftInfo(){
     const badge = document.getElementById('modeBadge');
     const milBadge = document.getElementById('milBadge');
+    const emergencyBadge = document.getElementById('emergencyBadge');
     const body = document.getElementById('infoBody');
     const pool = visibleAircraft();
     let target = null;
@@ -626,6 +674,8 @@
       badge.textContent = 'AUTO'; badge.className = 'mode-badge auto';
     }
     milBadge.style.display = target && target.military ? 'inline-block' : 'none';
+    emergencyBadge.classList.toggle('active',!!(target&&target.emergency));
+    if(target&&target.emergency)emergencyBadge.textContent=emergencyLabel(target.squawk);
 
     if(!target){
       body.innerHTML = '<div class="noscan"><span class="dot"></span> no aircraft in range</div>';
@@ -688,6 +738,14 @@
   }
   setInterval(updateLoop, 3000);
 
+  // ---------------- 24/7 watchdog ----------------
+  function watchdog(){
+    const now=Date.now();
+    if(now-lastReload>=AUTO_RELOAD_MS){lastReload=now;setStatus('automatic 24/7 restart…','ok');setTimeout(()=>location.reload(),500);return;}
+    if(lastGoodFetch && now-lastGoodFetch>=STALE_DATA_MS){lastReload=now;setStatus('data watchdog triggered — restarting…','err');setTimeout(()=>location.reload(),500);}
+  }
+  setInterval(watchdog,WATCHDOG_MS);
+
   // ---------------- controls ----------------
   document.getElementById('applyBtn').addEventListener('click', ()=>{
     const lat = parseFloat(document.getElementById('latInput').value);
@@ -717,6 +775,7 @@
   });
 
   // ---------------- init ----------------
+  loadSettings();
   resizeCanvas();
   requestAnimationFrame(draw);
   fetchAircraft().then(()=>{ lastAircraftFetch = Date.now(); });
